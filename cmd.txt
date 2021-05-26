@@ -1,0 +1,4 @@
+cd C:\Users\techsun\Desktop\分步存储\datacc\src
+go test datacc/store/engine
+-run 指定的测试函数名
+-v 显示输出

@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"sort"
 	"sync"
+	"sync/atomic"
 
 	"github.com/cespare/xxhash"
 )
@@ -108,3 +110,27 @@ func (r *ring) apply(f func([]byte, *entry) error) error {
 	}
 	return nil
 }
+
+func (r *ring) entry(key uint32) *entry {
+	return r.getPartition(key).entry(key)
+}
+
+// 返回所有key并排序
+func (r *ring) keys(sorted bool) []uint32 {
+	keys := make([]uint32, 0, atomic.LoadInt64(&r.keysHint))
+	for _, p := range r.partitions {
+		keys = append(keys, p.keys()...)
+	}
+
+	// 排序
+	if sorted {
+		sort.Sort(uint32Slices(keys))
+	}
+	return keys
+}
+
+type uint32Slices []uint32
+
+func (a uint32Slices) Len() int           { return len(a) }
+func (a uint32Slices) Less(i, j int) bool { return a[i] < a[j] }
+func (a uint32Slices) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

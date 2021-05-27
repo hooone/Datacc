@@ -47,3 +47,10 @@ func (e *entry) deduplicate() {
 	}
 	e.values = e.values.Deduplicate()
 }
+
+func (e *entry) count() int {
+	e.mu.RLock()
+	n := len(e.values)
+	e.mu.RUnlock()
+	return n
+}

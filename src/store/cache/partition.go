@@ -52,3 +52,24 @@ func (p *partition) reset() {
 	p.store = newStore
 	p.mu.Unlock()
 }
+
+func (p *partition) keys() []uint32 {
+	p.mu.RLock()
+	keys := make([]uint32, 0, len(p.store))
+	for k, v := range p.store {
+		if v.count() == 0 {
+			continue
+		}
+		keys = append(keys, k)
+	}
+	p.mu.RUnlock()
+	return keys
+}
+
+// 根据key获取entry
+func (p *partition) entry(key uint32) *entry {
+	p.mu.RLock()
+	e := p.store[key]
+	p.mu.RUnlock()
+	return e
+}

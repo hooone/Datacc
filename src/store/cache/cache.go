@@ -150,3 +150,62 @@ func (c *Cache) Snapshot() (*Cache, error) {
 
 	return c.snapshot, nil
 }
+
+// 获得当前cache中的所有key
+func (c *Cache) Keys() []uint32 {
+	c.mu.RLock()
+	store := c.store
+	c.mu.RUnlock()
+	return store.keys(true)
+}
+
+// 返回当前cache和快照中的所有数据
+func (c *Cache) Values(key uint32) values {
+	var snapshotEntries *entry
+
+	// 获得cache和快照中的相关entry
+	c.mu.RLock()
+	e := c.store.entry(key)
+	if c.snapshot != nil {
+		snapshotEntries = c.snapshot.store.entry(key)
+	}
+	c.mu.RUnlock()
+	if e == nil {
+		if snapshotEntries == nil {
+			return nil
+		}
+	} else {
+		e.deduplicate()
+	}
+
+	// entry打包并统计数量
+	var entries []*entry
+	sz := 0
+	if snapshotEntries != nil {
+		snapshotEntries.deduplicate() // guarantee we are deduplicated
+		entries = append(entries, snapshotEntries)
+		sz += snapshotEntries.count()
+	}
+	if e != nil {
+		entries = append(entries, e)
+		sz += e.count()
+	}
+
+	// 如果Cache和快照中都没有找到数据
+	if sz == 0 {
+		return nil
+	}
+
+	// 返回副本
+	values := make(values, sz)
+	n := 0
+	for _, e := range entries {
+		e.mu.RLock()
+		n += copy(values[n:], e.values)
+		e.mu.RUnlock()
+	}
+	values = values[:n]
+	values = values.Deduplicate()
+
+	return values
+}

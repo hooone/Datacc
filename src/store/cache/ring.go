@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/cespare/xxhash"
+import (
+	"sync"
+
+	"github.com/cespare/xxhash"
+)
 
 type ring struct {
 	// 存储的key的数量
@@ -29,6 +33,7 @@ func (r *ring) getPartition(key uint32) *partition {
 	return r.partitions[int(xxhash.Sum64(int32tobytes(key))%uint64(len(r.partitions)))]
 }
 
+// 数据写入
 func (r *ring) write(key uint32, ts []int64, values []byte) (bool, error) {
 	// 把数据封装成values
 	vls := make([]value, len(ts))
@@ -58,4 +63,48 @@ func (r *ring) reset() {
 		partition.reset()
 	}
 	r.keysHint = 0
+}
+
+// 对所有的分区异步执行传入的方法
+func (r *ring) apply(f func([]byte, *entry) error) error {
+
+	var (
+		// 计数锁
+		wg sync.WaitGroup
+		// 异步获取可能的error
+		res = make(chan error, len(r.partitions))
+	)
+
+	// 异步执行
+	for _, p := range r.partitions {
+		wg.Add(1)
+
+		go func(p *partition) {
+			defer wg.Done()
+
+			p.mu.RLock()
+			for k, e := range p.store {
+				if err := f(int32tobytes(k), e); err != nil {
+					res <- err
+					p.mu.RUnlock()
+					return
+				}
+			}
+			p.mu.RUnlock()
+		}(p)
+	}
+
+	// 等待协程完成
+	go func() {
+		wg.Wait()
+		close(res)
+	}()
+
+	// 记录error
+	for err := range res {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

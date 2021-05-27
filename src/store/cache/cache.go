@@ -90,6 +90,16 @@ func (c *Cache) Write(key uint32, ts []int64, values []byte) error {
 	return nil
 }
 
+// Deduplicate 去重复
+func (c *Cache) Deduplicate() {
+	c.mu.RLock()
+	store := c.store
+	c.mu.RUnlock()
+
+	// 并发执行去重算法
+	_ = store.apply(func(_ []byte, e *entry) error { e.deduplicate(); return nil })
+}
+
 // 获取当前Cache当前的总大小
 func (c *Cache) Size() uint64 {
 	return atomic.LoadUint64(&c.size) + atomic.LoadUint64(&c.snapshotSize)

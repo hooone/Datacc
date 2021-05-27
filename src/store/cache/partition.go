@@ -40,3 +40,15 @@ func (p *partition) write(key uint32, values []value) (bool, error) {
 	p.store[key] = e
 	return true, nil
 }
+
+// reset 数据清空
+func (p *partition) reset() {
+	p.mu.RLock()
+	sz := len(p.store)
+	p.mu.RUnlock()
+
+	newStore := make(map[uint32]*entry, sz)
+	p.mu.Lock()
+	p.store = newStore
+	p.mu.Unlock()
+}

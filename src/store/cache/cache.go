@@ -1,10 +1,10 @@
 package cache
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // 内存块分区数量
@@ -25,14 +25,22 @@ type Cache struct {
 	maxSize uint64
 	// 工作中的分区的数据量
 	size uint64
-	// 已打包未下线的数据量
+
+	// 快照的数据量
 	snapshotSize uint64
+	// 快照标志位
+	snapshotting bool
+	// 快照对象
+	snapshot *Cache
+	// 快照时间
+	lastSnapshot time.Time
 }
 
 func NewCache(maxSize uint64) *Cache {
 	c := &Cache{
-		maxSize: maxSize,
-		stats:   &CacheStatistics{},
+		maxSize:      maxSize,
+		stats:        &CacheStatistics{},
+		lastSnapshot: time.Now(),
 	}
 	return c
 }
@@ -52,7 +60,7 @@ func (c *Cache) Write(key uint32, ts []int64, values []byte) error {
 	// 状态校验
 	c.init()
 	if len(ts) != len(values) {
-		return errors.New("data array length not equal")
+		return fmt.Errorf("data array length not equal")
 	}
 
 	// 容量校验
@@ -85,4 +93,50 @@ func (c *Cache) Write(key uint32, ts []int64, values []byte) error {
 // 获取当前Cache当前的总大小
 func (c *Cache) Size() uint64 {
 	return atomic.LoadUint64(&c.size) + atomic.LoadUint64(&c.snapshotSize)
+}
+
+// Snapshot 把当前的数据存入c.snapshot中，然后清空当前cache
+func (c *Cache) Snapshot() (*Cache, error) {
+	c.init()
+
+	// 快照调用互锁
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.snapshotting {
+		return nil, fmt.Errorf("snapshot in progress")
+	}
+	c.snapshotting = true
+
+	// 首次调用时快照初始化
+	if c.snapshot == nil {
+		store, err := newring(ringShards)
+		if err != nil {
+			return nil, err
+		}
+		c.snapshot = &Cache{
+			store: store,
+		}
+	}
+
+	// 返回未处理完毕的快照
+	if c.snapshot.Size() > 0 {
+		return c.snapshot, nil
+	}
+
+	// 将当前的store转入下线，转入快照
+	c.snapshot.store, c.store = c.store, c.snapshot.store
+
+	// 将当前Cache的大小赋值给快照
+	snapshotSize := c.Size()
+	atomic.StoreUint64(&c.snapshot.size, snapshotSize)
+	atomic.StoreUint64(&c.snapshotSize, snapshotSize)
+
+	// 重置当前Cache的工作区
+	c.store.reset()
+	atomic.StoreUint64(&c.size, 0)
+
+	// 更新统计值
+	c.lastSnapshot = time.Now()
+
+	return c.snapshot, nil
 }

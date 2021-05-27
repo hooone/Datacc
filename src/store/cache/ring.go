@@ -3,6 +3,9 @@ package cache
 import "github.com/cespare/xxhash"
 
 type ring struct {
+	// 存储的key的数量
+	keysHint int64
+
 	// 存储分区容器
 	partitions []*partition
 }
@@ -47,4 +50,12 @@ func int32tobytes(v2 uint32) []byte {
 	b2[1] = uint8(v2 >> 16)
 	b2[0] = uint8(v2 >> 24)
 	return b2
+}
+
+// 数据清空
+func (r *ring) reset() {
+	for _, partition := range r.partitions {
+		partition.reset()
+	}
+	r.keysHint = 0
 }

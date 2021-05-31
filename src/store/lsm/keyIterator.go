@@ -6,7 +6,7 @@ type KeyIterator interface {
 	Next() bool
 
 	// 读取数据块
-	Read() (key []byte, minTime int64, maxTime int64, data []byte, err error)
+	Read() (key uint32, minTime int64, maxTime int64, data []byte, err error)
 
 	// 读取完成释放资源
 	Close() error

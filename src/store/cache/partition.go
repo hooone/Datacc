@@ -1,6 +1,9 @@
 package cache
 
-import "sync"
+import (
+	"datacc/store/coder"
+	"sync"
+)
 
 type partition struct {
 	// 写入锁
@@ -11,7 +14,7 @@ type partition struct {
 }
 
 // 区块写入- 线程安全
-func (p *partition) write(key uint32, values []value) (bool, error) {
+func (p *partition) write(key uint32, values []coder.Value) (bool, error) {
 	// 通过key获得entry
 	p.mu.RLock()
 	e := p.store[key]

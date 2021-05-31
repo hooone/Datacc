@@ -1,20 +1,20 @@
-package cache
+package coder
 
 import "sort"
 
-type value struct {
+type Value struct {
 	UnixNano int64
 	Value    byte
 }
 
-type values []value
+type Values []Value
 
-func (a values) Len() int           { return len(a) }
-func (a values) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a values) Less(i, j int) bool { return a[i].UnixNano < a[j].UnixNano }
+func (a Values) Len() int           { return len(a) }
+func (a Values) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a Values) Less(i, j int) bool { return a[i].UnixNano < a[j].UnixNano }
 
 // 排序去重算法
-func (a values) Deduplicate() values {
+func (a Values) Deduplicate() Values {
 	if len(a) <= 1 {
 		return a
 	}

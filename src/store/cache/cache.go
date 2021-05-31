@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"datacc/store/coder"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -160,7 +161,7 @@ func (c *Cache) Keys() []uint32 {
 }
 
 // 返回当前cache和快照中的所有数据
-func (c *Cache) Values(key uint32) values {
+func (c *Cache) Values(key uint32) coder.Values {
 	var snapshotEntries *entry
 
 	// 获得cache和快照中的相关entry
@@ -197,7 +198,7 @@ func (c *Cache) Values(key uint32) values {
 	}
 
 	// 返回副本
-	values := make(values, sz)
+	values := make(coder.Values, sz)
 	n := 0
 	for _, e := range entries {
 		e.mu.RLock()

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"datacc/store/coder"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -38,9 +39,9 @@ func (r *ring) getPartition(key uint32) *partition {
 // 数据写入
 func (r *ring) write(key uint32, ts []int64, values []byte) (bool, error) {
 	// 把数据封装成values
-	vls := make([]value, len(ts))
+	vls := make([]coder.Value, len(ts))
 	for i := 0; i < len(ts); i++ {
-		vls[i] = value{
+		vls[i] = coder.Value{
 			UnixNano: ts[i],
 			Value:    values[i],
 		}

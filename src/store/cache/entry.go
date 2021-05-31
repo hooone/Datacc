@@ -1,15 +1,18 @@
 package cache
 
-import "sync"
+import (
+	"datacc/store/coder"
+	"sync"
+)
 
 type entry struct {
 	mu     sync.RWMutex
-	values values
+	values coder.Values
 }
 
-func newEntryValues(values []value) (*entry, error) {
+func newEntryValues(values []coder.Value) (*entry, error) {
 	e := &entry{}
-	e.values = make([]value, 0, len(values))
+	e.values = make([]coder.Value, 0, len(values))
 	e.values = append(e.values, values...)
 
 	// No values, don't check types and ordering
@@ -20,7 +23,7 @@ func newEntryValues(values []value) (*entry, error) {
 	return e, nil
 }
 
-func (e *entry) add(values []value) error {
+func (e *entry) add(values []coder.Value) error {
 	if len(values) == 0 {
 		return nil
 	}

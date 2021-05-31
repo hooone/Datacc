@@ -20,7 +20,7 @@ type cacheKeyIterator struct {
 	i int
 	// 每个key的读取完成通道
 	ready []chan struct{}
-	// 已解析的数据缓存
+	// 已编码压缩的数据缓存
 	blocks [][]cacheBlock
 	// 错误缓存
 	err error
@@ -53,7 +53,7 @@ func NewCacheKeyIterator(cache *cache.Cache, size int, interrupt chan struct{}) 
 		interrupt: interrupt,
 	}
 
-	// 数据解析
+	// 异步的数据编码压缩
 	go cki.encode()
 
 	return cki
@@ -72,17 +72,17 @@ func (c *cacheKeyIterator) Next() bool {
 	// 切换key
 	c.i++
 
-	// 所有解析完成的key都读取完成
+	// 所有压缩完成的key都读取完成
 	if c.i >= len(c.ready) {
 		return false
 	}
 
-	// 等待下一个key解析完成
+	// 等待下一个key编码压缩完成
 	<-c.ready[c.i]
 	return true
 }
 
-// 读取数据
+// 以编码后的数据块的格式读取数据
 func (c *cacheKeyIterator) Read() (uint32, int64, int64, []byte, error) {
 	// 状态检查，优雅退出
 	select {
@@ -95,7 +95,7 @@ func (c *cacheKeyIterator) Read() (uint32, int64, int64, []byte, error) {
 	return blk.k, blk.minTime, blk.maxTime, blk.b, blk.err
 }
 
-// 把cache中的所有数据解析到block中
+// 把cache中的所有数据压缩后保存到block中
 func (c *cacheKeyIterator) encode() {
 	concurrency := runtime.GOMAXPROCS(0)
 	n := len(c.ready)
@@ -107,7 +107,7 @@ func (c *cacheKeyIterator) encode() {
 	for cour := 0; cour < concurrency; cour++ {
 		// 根据可用cpu数量，为每个cpu核创建协程
 		go func() {
-			// 编码器
+			// 从池中取出encoder，如果都被占用，则会等待释放
 			tenc := getTimeEncoder(DefaultMaxPointsPerBlock)
 			benc := getByteEncoder(DefaultMaxPointsPerBlock)
 
@@ -142,10 +142,10 @@ func (c *cacheKeyIterator) encode() {
 					// 根据tsm编码规则，将数据[]value转化为block
 					b, err = encodeByteBlockUsing(nil, values[:end], tenc, benc)
 
-					// 移除已经解析的数据
+					// 移除已经编码压缩的数据
 					values = values[end:]
 
-					// 保存已解析完成的数据
+					// 保存已编码压缩完成的数据
 					c.blocks[keyidx] = append(c.blocks[keyidx], cacheBlock{
 						k:       key,
 						minTime: minTime,
@@ -158,7 +158,7 @@ func (c *cacheKeyIterator) encode() {
 						c.err = err
 					}
 				}
-				// 发送key的解析完成信号
+				// 发送key的编码压缩完成信号
 				c.ready[keyidx] <- struct{}{}
 			}
 		}()

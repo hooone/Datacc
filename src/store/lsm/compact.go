@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-const DefaultMaxPointsPerBlock = 1
+const DefaultMaxPointsPerBlock = 240 * 8
 
 type Compactor struct {
 	// 工作状态锁

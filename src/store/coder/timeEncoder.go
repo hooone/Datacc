@@ -129,10 +129,10 @@ func (e *encoder) encodePacked(div, min uint64, dts []uint64) ([]byte, error) {
 	b[0] |= byte(math.Log10(float64(div)))
 
 	// 第一个时间戳，未经过压缩
-	binary.BigEndian.PutUint64(b[1:9], uint64(dts[0]))
+	binary.LittleEndian.PutUint64(b[1:9], uint64(dts[0]))
 
 	// 时间戳的最小值
-	binary.BigEndian.PutUint64(b[9:17], min)
+	binary.LittleEndian.PutUint64(b[9:17], min)
 
 	// 时间戳主体数据
 	copy(b[17:], deltas)
@@ -153,7 +153,7 @@ func (e *encoder) encodeRLE(first, delta, div uint64, n int) ([]byte, error) {
 
 	i := 1
 	// 第一个时间戳，定长为8
-	binary.BigEndian.PutUint64(b[i:], uint64(first))
+	binary.LittleEndian.PutUint64(b[i:], uint64(first))
 	i += 8
 	// 时间戳步长，以变长编码方式转化为[]byte
 	i += binary.PutUvarint(b[i:], uint64(delta/div))
@@ -172,7 +172,7 @@ func (e *encoder) encodeRaw() ([]byte, error) {
 	b := e.bytes[:sz]
 	b[0] = byte(timeUncompressed) << 4
 	for i, v := range e.ts {
-		binary.BigEndian.PutUint64(b[1+i*8:1+i*8+8], uint64(v))
+		binary.LittleEndian.PutUint64(b[1+i*8:1+i*8+8], uint64(v))
 	}
 	return b, nil
 }

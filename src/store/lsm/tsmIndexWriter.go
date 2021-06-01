@@ -146,14 +146,14 @@ func (d *directIndex) encode(w io.Writer) (int64, error) {
 	}
 
 	// 写入当前key
-	binary.BigEndian.PutUint32(kbf[0:4], key)
+	binary.LittleEndian.PutUint32(kbf[0:4], key)
 	if n, err = w.Write(kbf[0:4]); err != nil {
 		return int64(n) + N, fmt.Errorf("write: writer key error: %v", err)
 	}
 	N += int64(n)
 
 	// 写入block数量
-	binary.BigEndian.PutUint16(buf[0:2], uint16(entries.Len()))
+	binary.LittleEndian.PutUint16(buf[0:2], uint16(entries.Len()))
 	if n, err = w.Write(buf[0:2]); err != nil {
 		return int64(n) + N, fmt.Errorf("write: writer block type and count error: %v", err)
 	}

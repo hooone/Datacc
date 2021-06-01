@@ -34,7 +34,7 @@ func TestByteCoder_EncodeSimple8b(t *testing.T) {
 	}
 	// 压缩的主体数据校验
 	var buf [240]byte
-	r := binary.BigEndian.Uint32(bts[3:])
+	r := binary.LittleEndian.Uint32(bts[3:])
 	n, _ := Decompress(&buf, r)
 	if n != 5 {
 		t.Fatalf("byte encode count error")

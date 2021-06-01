@@ -172,8 +172,3 @@ func (c *cacheKeyIterator) Close() error {
 func (c *cacheKeyIterator) Err() error {
 	return c.err
 }
-
-// 索引区的估算大小
-func (c *cacheKeyIterator) EstimatedIndexSize() int {
-	return len(c.keys) * 4
-}

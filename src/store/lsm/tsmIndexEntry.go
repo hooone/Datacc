@@ -46,9 +46,9 @@ func (e *IndexEntry) AppendTo(b []byte) []byte {
 			b = b[:indexEntrySize]
 		}
 	}
-	binary.BigEndian.PutUint64(b[:8], uint64(e.MinTime))
-	binary.BigEndian.PutUint64(b[8:16], uint64(e.MaxTime))
-	binary.BigEndian.PutUint64(b[16:24], uint64(e.Offset))
-	binary.BigEndian.PutUint32(b[24:28], uint32(e.Size))
+	binary.LittleEndian.PutUint64(b[:8], uint64(e.MinTime))
+	binary.LittleEndian.PutUint64(b[8:16], uint64(e.MaxTime))
+	binary.LittleEndian.PutUint64(b[16:24], uint64(e.Offset))
+	binary.LittleEndian.PutUint32(b[24:28], uint32(e.Size))
 	return b
 }

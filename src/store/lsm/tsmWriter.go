@@ -100,7 +100,7 @@ func (t *tsmWriter) WriteBlock(key uint32, minTime, maxTime int64, block []byte)
 
 	// 写入每个块头部的CRC校验码
 	var checksum [crc32.Size]byte
-	binary.BigEndian.PutUint32(checksum[:], crc32.ChecksumIEEE(block))
+	binary.LittleEndian.PutUint32(checksum[:], crc32.ChecksumIEEE(block))
 	_, err := t.bufw.Write(checksum[:])
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (t *tsmWriter) WriteIndex() error {
 	// 写Index的位置(Foot部分)
 	var buf [8]byte
 	indexPos := t.n
-	binary.BigEndian.PutUint64(buf[:], uint64(indexPos))
+	binary.LittleEndian.PutUint64(buf[:], uint64(indexPos))
 	_, err := t.bufw.Write(buf[:])
 	return err
 }
@@ -158,7 +158,7 @@ func (t *tsmWriter) WriteIndex() error {
 // 写入文件头: 识别码和版本号
 func (t *tsmWriter) writeHeader() error {
 	var buf [5]byte
-	binary.BigEndian.PutUint32(buf[0:4], MagicNumber)
+	binary.LittleEndian.PutUint32(buf[0:4], MagicNumber)
 	buf[4] = Version
 	n, err := t.bufw.Write(buf[:])
 	if err != nil {

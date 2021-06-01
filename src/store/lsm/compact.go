@@ -26,11 +26,31 @@ type Compactor struct {
 	// 写入限流器
 	RateLimit limiter.Rate
 
+	// 获得文件版本号，用于生成文件名
+	FileStore interface {
+		NextGeneration() int
+	}
+
 	// 文件层级压缩状态控制
 	compactionsEnabled bool
 	// 快照状态控制
 	snapshotsEnabled   bool
 	snapshotsInterrupt chan struct{}
+}
+
+func NewCompactor() *Compactor {
+	return &Compactor{}
+}
+func (c *Compactor) Open() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.snapshotsEnabled || c.compactionsEnabled {
+		return
+	}
+
+	c.snapshotsEnabled = true
+	c.compactionsEnabled = true
+	c.snapshotsInterrupt = make(chan struct{})
 }
 
 // 将Cache快照写入TSM文件.
@@ -41,7 +61,7 @@ func (c *Compactor) WriteSnapshot(che *cache.Cache) ([]string, error) {
 	intC := c.snapshotsInterrupt
 	c.mu.RUnlock()
 	if !enabled {
-		return nil, fmt.Errorf("snapshots disabled")
+		return nil, errSnapshotsDisabled
 	}
 
 	// 并发方式参数预留
@@ -81,7 +101,7 @@ func (c *Compactor) WriteSnapshot(che *cache.Cache) ([]string, error) {
 	enabled = c.snapshotsEnabled
 	c.mu.Unlock()
 	if !enabled {
-		return nil, fmt.Errorf("snapshots disabled")
+		return nil, errSnapshotsDisabled
 	}
 
 	return files, err
@@ -94,7 +114,7 @@ func (c *Compactor) writeNewFiles(generation, sequence int, src []string, iter K
 		sequence++
 
 		// 生成文件名。先把数据写成.tmp，写入完成后重命名
-		fileName := filepath.Join(c.Dir, fmt.Sprintf("%09d-%09d", generation, sequence)+"."+TSMFileExtension+"."+CompactionTempExtension)
+		fileName := filepath.Join(c.Dir, formatFileName(generation, sequence))
 
 		// 尽可能多的写入
 		err := c.write(fileName, iter, throttle)

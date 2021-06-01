@@ -104,7 +104,7 @@ func (e *ByteEncoder) encodePacked() ([]byte, error) {
 
 	// 填入压缩后的数据
 	for i, v := range encoded {
-		binary.BigEndian.PutUint32(b[3+i*4:3+i*4+4], v)
+		binary.LittleEndian.PutUint32(b[3+i*4:3+i*4+4], v)
 	}
 	return b, nil
 }

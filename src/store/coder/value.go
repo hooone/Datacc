@@ -13,6 +13,11 @@ func (a Values) Len() int           { return len(a) }
 func (a Values) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a Values) Less(i, j int) bool { return a[i].UnixNano < a[j].UnixNano }
 
+// NewValue returns a new value.
+func NewValue(t int64, v byte) Value {
+	return Value{UnixNano: t, Value: v}
+}
+
 // 排序去重算法
 func (a Values) Deduplicate() Values {
 	if len(a) <= 1 {

@@ -57,7 +57,7 @@ func (w *WriteWALEntry) Encode(dst []byte) ([]byte, error) {
 func (w *WriteWALEntry) UnmarshalBinary(b []byte) error {
 	var i int
 	lastKey := uint32(0)
-	values := make([]coder.Value, 0)
+	values := make([]coder.Value, 1)
 	for i < len(b) {
 		// 长度确认
 		if i+9 > len(b) {
@@ -71,6 +71,7 @@ func (w *WriteWALEntry) UnmarshalBinary(b []byte) error {
 		if lastKey != key {
 			if len(values) > 0 {
 				w.Values[lastKey] = values
+				values = make([]coder.Value, 0)
 			}
 		}
 		lastKey = key

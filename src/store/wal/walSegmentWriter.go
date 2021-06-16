@@ -13,6 +13,7 @@ type WALSegmentWriter interface {
 	setSize(sz int)
 	sync() error
 	close() error
+	Flush() error
 }
 type walSegmentWriter struct {
 	bw   *bufio.Writer

@@ -26,6 +26,8 @@ type Cache struct {
 	maxSize uint64
 	// 工作中的分区的数据量
 	size uint64
+	// 最近写入时间
+	lastWriteTime time.Time
 
 	// 快照的数据量
 	snapshotSize uint64
@@ -88,7 +90,61 @@ func (c *Cache) Write(key uint32, ts []int64, values []byte) error {
 	atomic.AddInt64(&c.stats.MemSizeBytes, int64(addedSize))
 	atomic.AddInt64(&c.stats.WriteOK, 1)
 
+	c.mu.Lock()
+	c.lastWriteTime = time.Now()
+	c.mu.Unlock()
+
 	return nil
+}
+
+// 批量写入
+func (c *Cache) WriteMulti(values map[uint32][]coder.Value) error {
+	c.init()
+
+	// 写入数据的大小校验
+	var addedSize uint64
+	for _, v := range values {
+		addedSize += uint64(coder.Values(v).Size())
+	}
+	limit := c.maxSize
+	n := c.Size() + addedSize
+	if limit > 0 && n > limit {
+		atomic.AddInt64(&c.stats.WriteErr, 1)
+		return ErrCacheMemorySizeLimitExceeded(n, limit)
+	}
+
+	var werr error
+	c.mu.RLock()
+	store := c.store
+	c.mu.RUnlock()
+
+	// 数据写入和数量统计
+	atomic.AddUint64(&c.size, addedSize)
+	for k, v := range values {
+		newKey, err := store.writeValues(k, v)
+		if err != nil {
+			werr = err
+			addedSize -= uint64(coder.Values(v).Size())
+			atomic.AddUint64(&c.size, ^(uint64(coder.Values(v).Size()) - 1))
+		}
+		if newKey {
+			addedSize += uint64(4)
+			atomic.AddUint64(&c.size, 4)
+		}
+	}
+
+	// 更新stat
+	if werr != nil {
+		atomic.AddInt64(&c.stats.WriteErr, 1)
+	}
+	atomic.AddInt64(&c.stats.MemSizeBytes, int64(addedSize))
+	atomic.AddInt64(&c.stats.WriteOK, 1)
+
+	c.mu.Lock()
+	c.lastWriteTime = time.Now()
+	c.mu.Unlock()
+
+	return werr
 }
 
 // Deduplicate 去重复

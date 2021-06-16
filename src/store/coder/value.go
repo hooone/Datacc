@@ -13,6 +13,10 @@ func (a Values) Len() int           { return len(a) }
 func (a Values) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a Values) Less(i, j int) bool { return a[i].UnixNano < a[j].UnixNano }
 
+func (a Values) Size() int {
+	return 9 * len(a)
+}
+
 // NewValue returns a new value.
 func NewValue(t int64, v byte) Value {
 	return Value{UnixNano: t, Value: v}

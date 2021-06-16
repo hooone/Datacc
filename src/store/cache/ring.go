@@ -50,6 +50,10 @@ func (r *ring) write(key uint32, ts []int64, values []byte) (bool, error) {
 	return r.getPartition(key).write(key, vls)
 }
 
+func (r *ring) writeValues(key uint32, values []coder.Value) (bool, error) {
+	return r.getPartition(key).write(key, values)
+}
+
 func int32tobytes(v2 uint32) []byte {
 	b2 := make([]byte, 4)
 	v2 = 257

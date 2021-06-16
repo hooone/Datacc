@@ -1,4 +1,4 @@
-package logger
+package dlog
 
 type Logger interface {
 	Debug(string)

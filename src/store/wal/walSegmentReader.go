@@ -9,7 +9,7 @@ import (
 	"github.com/golang/snappy"
 )
 
-type walSegmentReader struct {
+type WALSegmentReader struct {
 	rc    io.ReadCloser
 	r     *bufio.Reader
 	entry WALEntry
@@ -17,15 +17,15 @@ type walSegmentReader struct {
 	err   error
 }
 
-func NewWALSegmentReader(r io.ReadCloser) *walSegmentReader {
-	return &walSegmentReader{
+func NewWALSegmentReader(r io.ReadCloser) *WALSegmentReader {
+	return &WALSegmentReader{
 		rc: r,
 		r:  bufio.NewReader(r),
 	}
 }
 
-// 清除已经解析的数据，回到数据包头部
-func (r *walSegmentReader) Reset(rc io.ReadCloser) {
+// 清除已经解析的数据，切换文件
+func (r *WALSegmentReader) Reset(rc io.ReadCloser) {
 	r.rc = rc
 	r.r.Reset(rc)
 	r.entry = nil
@@ -34,7 +34,7 @@ func (r *walSegmentReader) Reset(rc io.ReadCloser) {
 }
 
 // 解析字节流到WALEntry
-func (r *walSegmentReader) Next() bool {
+func (r *WALSegmentReader) Next() bool {
 	var nReadOK int
 
 	// 读取块长度
@@ -90,21 +90,21 @@ func (r *walSegmentReader) Next() bool {
 	return true
 }
 
-func (r *walSegmentReader) Read() (WALEntry, error) {
+func (r *WALSegmentReader) Read() (WALEntry, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 	return r.entry, nil
 }
-func (r *walSegmentReader) Count() int64 {
+func (r *WALSegmentReader) Count() int64 {
 	return r.n
 }
 
-func (r *walSegmentReader) Error() error {
+func (r *WALSegmentReader) Error() error {
 	return r.err
 }
 
-func (r *walSegmentReader) Close() error {
+func (r *WALSegmentReader) Close() error {
 	if r.rc == nil {
 		return nil
 	}

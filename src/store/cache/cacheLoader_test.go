@@ -74,7 +74,6 @@ func TestCacheLoader_LoadSingle(t *testing.T) {
 			t.Fatalf("points mismatch 4: got %v, exp %v", v2Read[i].Value, byte(i)+29)
 		}
 	}
-
 }
 
 func MustTempDir() string {

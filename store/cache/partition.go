@@ -1,8 +1,9 @@
 package cache
 
 import (
-	"datacc/store/coder"
 	"sync"
+
+	"github.com/hooone/datacc/store/coder"
 )
 
 type partition struct {

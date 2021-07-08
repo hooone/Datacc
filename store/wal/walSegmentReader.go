@@ -2,9 +2,10 @@ package wal
 
 import (
 	"bufio"
-	"datacc/store/coder"
 	"encoding/binary"
 	"io"
+
+	"github.com/hooone/datacc/store/coder"
 
 	"github.com/golang/snappy"
 )

@@ -1,10 +1,11 @@
 package cache
 
 import (
-	"datacc/dlog"
-	"datacc/store/wal"
 	"os"
 	"strconv"
+
+	"github.com/hooone/datacc/dlog"
+	"github.com/hooone/datacc/store/wal"
 )
 
 type CacheLoader struct {

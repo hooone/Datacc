@@ -1,11 +1,12 @@
 package cache
 
 import (
-	"datacc/store/coder"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/hooone/datacc/store/coder"
 )
 
 // 内存块分区数量

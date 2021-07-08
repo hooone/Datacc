@@ -1,4 +1,4 @@
-module github.com/hooone/datacc
+module datacc
 
 go 1.15
 

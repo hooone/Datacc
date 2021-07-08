@@ -1,8 +1,9 @@
 package wal
 
 import (
-	"datacc/store/coder"
 	"encoding/binary"
+
+	"github.com/hooone/datacc/store/coder"
 )
 
 // ┌─────────────────────────────────────────────────────────────┐

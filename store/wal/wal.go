@@ -1,14 +1,15 @@
 package wal
 
 import (
-	"datacc/common/pool"
-	"datacc/store/coder"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/hooone/datacc/common/pool"
+	"github.com/hooone/datacc/store/coder"
 
 	"github.com/golang/snappy"
 )

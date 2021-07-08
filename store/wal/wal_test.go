@@ -1,12 +1,13 @@
 package wal
 
 import (
-	"datacc/store/coder"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/hooone/datacc/store/coder"
 
 	"github.com/golang/snappy"
 )

@@ -1,10 +1,11 @@
 package lsm
 
 import (
-	"datacc/store/cache"
 	"fmt"
 	"io/ioutil"
 	"testing"
+
+	"github.com/hooone/datacc/store/cache"
 )
 
 func TestCompact_WriteSnapshot(t *testing.T) {

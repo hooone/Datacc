@@ -1,12 +1,13 @@
 package cache
 
 import (
-	"datacc/store/coder"
-	"datacc/store/wal"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/hooone/datacc/store/coder"
+	"github.com/hooone/datacc/store/wal"
 
 	"github.com/golang/snappy"
 )
